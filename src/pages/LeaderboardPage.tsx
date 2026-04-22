@@ -54,33 +54,54 @@ export default function LeaderboardPage() {
         setActiveSeason(season ?? null)
 
         if (season) {
-          // 2. Get sessions for active season
-          // TODO: Replace with server-side GROUP BY aggregation (RPC/view) when session count grows
+          // 2a. Get player contributions for active season (bots already excluded at submission time)
+          // Earnings + served come from player_contributions so bot serves are never counted
+          // TODO: Replace with server-side GROUP BY aggregation (RPC/view) when row count grows
+          const { data: contribRows, error: contribErr } = await supabase
+            .from('player_contributions')
+            .select('channel_name, money_earned, served, session_id')
+            .eq('season_id', season.id)
+            .limit(10000)
+
+          if (contribErr) throw contribErr
+
+          // 2b. Get sessions for lost counts (lost is kitchen-level, not per-player)
           const { data: sessionRows, error: sessionsErr } = await supabase
             .from('sessions')
-            .select('channel_name, money_earned, served, lost')
+            .select('channel_name, lost')
             .eq('season_id', season.id)
             .limit(5000)
 
           if (sessionsErr) throw sessionsErr
 
-          // Aggregate in JS
+          // Aggregate player contributions: earnings, served, distinct session count
           const map = new Map<string, LeaderboardRow>()
-          for (const row of sessionRows ?? []) {
+          for (const row of contribRows ?? []) {
             const existing = map.get(row.channel_name)
             if (existing) {
               existing.total_money += row.money_earned ?? 0
-              existing.sessions += 1
               existing.total_served += row.served ?? 0
-              existing.total_lost += row.lost ?? 0
+              if (!existing._sessionIds.has(row.session_id)) {
+                existing._sessionIds.add(row.session_id)
+                existing.sessions += 1
+              }
             } else {
               map.set(row.channel_name, {
                 channel_name: row.channel_name,
                 total_money: row.money_earned ?? 0,
                 sessions: 1,
                 total_served: row.served ?? 0,
-                total_lost: row.lost ?? 0,
+                total_lost: 0,
+                _sessionIds: new Set([row.session_id]),
               })
+            }
+          }
+
+          // Merge lost from sessions
+          for (const row of sessionRows ?? []) {
+            const existing = map.get(row.channel_name)
+            if (existing) {
+              existing.total_lost += row.lost ?? 0
             }
           }
 

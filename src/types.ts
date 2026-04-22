@@ -14,4 +14,5 @@ export interface LeaderboardRow {
   sessions: number
   total_served: number
   total_lost: number
+  _sessionIds: Set<string>
 }
