@@ -13,5 +13,5 @@ export interface LeaderboardRow {
   total_money: number
   sessions: number
   total_served: number
+  total_lost: number
 }
-

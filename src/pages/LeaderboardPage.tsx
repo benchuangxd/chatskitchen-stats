@@ -16,6 +16,13 @@ function formatDate(iso: string): string {
   })
 }
 
+function rankDisplay(idx: number): React.ReactNode {
+  if (idx === 0) return <span style={{ fontSize: '18px' }}>🥇</span>
+  if (idx === 1) return <span style={{ fontSize: '18px' }}>🥈</span>
+  if (idx === 2) return <span style={{ fontSize: '18px' }}>🥉</span>
+  return <span style={{ color: 'var(--text-muted)' }}>{idx + 1}</span>
+}
+
 export default function LeaderboardPage() {
   const [activeSeason, setActiveSeason] = useState<Season | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([])
@@ -51,7 +58,7 @@ export default function LeaderboardPage() {
           // TODO: Replace with server-side GROUP BY aggregation (RPC/view) when session count grows
           const { data: sessionRows, error: sessionsErr } = await supabase
             .from('sessions')
-            .select('channel_name, money_earned, served')
+            .select('channel_name, money_earned, served, lost')
             .eq('season_id', season.id)
             .limit(5000)
 
@@ -65,12 +72,14 @@ export default function LeaderboardPage() {
               existing.total_money += row.money_earned ?? 0
               existing.sessions += 1
               existing.total_served += row.served ?? 0
+              existing.total_lost += row.lost ?? 0
             } else {
               map.set(row.channel_name, {
                 channel_name: row.channel_name,
                 total_money: row.money_earned ?? 0,
                 sessions: 1,
                 total_served: row.served ?? 0,
+                total_lost: row.lost ?? 0,
               })
             }
           }
@@ -111,9 +120,9 @@ export default function LeaderboardPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Header />
 
-      <main style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 16px' }}>
+      <main style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
         {loading && (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '64px' }}>
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '64px', fontFamily: "'Space Mono', monospace" }}>
             Loading...
           </p>
         )}
@@ -126,41 +135,55 @@ export default function LeaderboardPage() {
 
         {!loading && !error && (
           <>
-            {/* Season progress */}
+            {/* Season progress card */}
             {activeSeason ? (
               <section
                 style={{
-                  background: 'var(--bg-card)',
+                  background: 'var(--surface)',
                   border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  padding: '24px',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '20px',
                   marginBottom: '24px',
                 }}
               >
-                <h2 style={{ color: 'var(--gold)', marginBottom: '12px', fontSize: '18px' }}>
-                  Season {activeSeason.number}
-                </h2>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: 'var(--text-muted)' }}>
-                  <span>{formatMoney(activeSeason.total_money_earned)} / {formatMoney(activeSeason.money_goal)}</span>
-                  <span>{progressPct.toFixed(1)}%</span>
+                <div style={{ marginBottom: '12px' }}>
+                  <span style={{
+                    fontFamily: "'Fredoka', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--gold)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.5px',
+                  }}>
+                    Season {activeSeason.number}
+                  </span>
                 </div>
-                <div
-                  style={{
-                    height: '12px',
-                    background: 'var(--border)',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${progressPct}%`,
-                      background: 'var(--gold)',
-                      borderRadius: '6px',
-                      transition: 'width 0.4s ease',
-                    }}
-                  />
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px',
+                }}>
+                  <span style={{ color: 'var(--text-muted)', fontFamily: "'Space Mono', monospace", fontSize: '13px' }}>
+                    {formatMoney(activeSeason.total_money_earned)} / {formatMoney(activeSeason.money_goal)}
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontFamily: "'Space Mono', monospace", fontSize: '13px' }}>
+                    {progressPct.toFixed(1)}%
+                  </span>
+                </div>
+                <div style={{
+                  height: '10px',
+                  background: 'var(--bg-dark, #171412)',
+                  borderRadius: '5px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${progressPct}%`,
+                    background: 'var(--gold)',
+                    borderRadius: '5px',
+                    transition: 'width 0.4s ease',
+                  }} />
                 </div>
               </section>
             ) : (
@@ -170,143 +193,293 @@ export default function LeaderboardPage() {
             )}
 
             {/* Leaderboard table */}
-            <section
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                overflow: 'hidden',
-                marginBottom: '24px',
-              }}
-            >
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-                <h2 style={{ color: 'var(--gold)', fontSize: '18px' }}>
-                  🏆 Global Leaderboard
-                  {activeSeason ? ` — Season ${activeSeason.number}` : ''}
-                </h2>
-              </div>
+            <section style={{ marginBottom: '24px' }}>
+              <h2 style={{
+                fontFamily: "'Fredoka', sans-serif",
+                fontSize: '20px',
+                fontWeight: 700,
+                color: 'var(--text)',
+                marginBottom: '12px',
+                letterSpacing: '0.5px',
+              }}>
+                🏆 LEADERBOARD
+                {activeSeason && (
+                  <span style={{
+                    fontFamily: "'Space Mono', monospace",
+                    fontSize: '12px',
+                    fontWeight: 400,
+                    color: 'var(--text-muted)',
+                    marginLeft: '10px',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                  }}>
+                    Season {activeSeason.number}
+                  </span>
+                )}
+              </h2>
 
               {leaderboard.length === 0 ? (
-                <p style={{ padding: '32px 24px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                <div style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '32px 24px',
+                  textAlign: 'center',
+                  color: 'var(--text-muted)',
+                }}>
                   No data yet this season.
-                </p>
+                </div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg)', color: 'var(--text-muted)', fontSize: '13px', textTransform: 'uppercase' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', width: '48px' }}>#</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left' }}>Channel</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'right' }}>Earnings</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'right' }}>Sessions</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'right' }}>Served</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.map((row, idx) => (
-                        <tr
-                          key={row.channel_name}
-                          style={{
-                            borderTop: '1px solid var(--border)',
-                            transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-card-hover)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = '')}
-                        >
-                          <td style={{ padding: '14px 16px', color: idx < 3 ? 'var(--gold)' : 'var(--text-muted)', fontWeight: idx < 3 ? 700 : 400 }}>
-                            {idx + 1}
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <Link
-                              to={`/player/${encodeURIComponent(row.channel_name.toLowerCase())}`}
-                              style={{ color: 'var(--text)', fontWeight: 500 }}
-                            >
-                              {row.channel_name}
-                            </Link>
-                          </td>
-                          <td style={{ padding: '14px 16px', textAlign: 'right', color: 'var(--gold)', fontWeight: 600 }}>
-                            {formatMoney(row.total_money)}
-                          </td>
-                          <td style={{ padding: '14px 16px', textAlign: 'right', color: 'var(--text-muted)' }}>
-                            {row.sessions}
-                          </td>
-                          <td style={{ padding: '14px 16px', textAlign: 'right', color: 'var(--text-muted)' }}>
-                            {row.total_served}
-                          </td>
+                <div style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'left',
+                            width: '52px',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>#</th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'left',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>Channel</th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'right',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--gold)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>Earnings</th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'right',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--text-muted)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>Sessions</th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'right',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--success)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>Served</th>
+                          <th style={{
+                            padding: '12px 16px',
+                            textAlign: 'right',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--danger)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                          }}>Lost</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((row, idx) => (
+                          <tr
+                            key={row.channel_name}
+                            style={{
+                              borderTop: idx === 0 ? 'none' : '1px solid var(--border)',
+                              transition: 'background 0.15s',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '')}
+                          >
+                            <td style={{
+                              padding: '14px 16px',
+                              fontFamily: "'Space Mono', monospace",
+                              fontSize: '13px',
+                              fontWeight: idx < 3 ? 700 : 400,
+                              textAlign: 'left',
+                            }}>
+                              {rankDisplay(idx)}
+                            </td>
+                            <td style={{ padding: '14px 16px' }}>
+                              <Link
+                                to={`/player/${encodeURIComponent(row.channel_name.toLowerCase())}`}
+                                style={{
+                                  fontFamily: "'Fredoka', sans-serif",
+                                  fontSize: '16px',
+                                  fontWeight: 600,
+                                  color: 'var(--text)',
+                                  textDecoration: 'none',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.color = 'var(--gold)')}
+                                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text)')}
+                              >
+                                {row.channel_name}
+                              </Link>
+                            </td>
+                            <td style={{
+                              padding: '14px 16px',
+                              textAlign: 'right',
+                              color: 'var(--gold)',
+                              fontFamily: "'Space Mono', monospace",
+                              fontWeight: 700,
+                              fontSize: '13px',
+                            }}>
+                              {formatMoney(row.total_money)}
+                            </td>
+                            <td style={{
+                              padding: '14px 16px',
+                              textAlign: 'right',
+                              color: 'var(--text-muted)',
+                              fontFamily: "'Space Mono', monospace",
+                              fontSize: '13px',
+                            }}>
+                              {row.sessions}
+                            </td>
+                            <td style={{
+                              padding: '14px 16px',
+                              textAlign: 'right',
+                              color: 'var(--success)',
+                              fontFamily: "'Space Mono', monospace",
+                              fontSize: '13px',
+                            }}>
+                              {row.total_served}
+                            </td>
+                            <td style={{
+                              padding: '14px 16px',
+                              textAlign: 'right',
+                              color: 'var(--danger)',
+                              fontFamily: "'Space Mono', monospace",
+                              fontSize: '13px',
+                            }}>
+                              {row.total_lost}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </section>
 
             {/* Past seasons */}
-            <section
-              style={{
-                background: 'var(--bg-card)',
+            <section>
+              <div style={{
+                background: 'var(--surface)',
                 border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
+                borderRadius: 'var(--radius-lg)',
                 overflow: 'hidden',
-              }}
-            >
-              <button
-                onClick={() => setPastExpanded(prev => !prev)}
-                style={{
-                  width: '100%',
-                  padding: '16px 24px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {pastExpanded ? '▾' : '▸'}
-                </span>
-                Past Seasons
-                <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '13px' }}>
-                  ({pastSeasons.length})
-                </span>
-              </button>
+              }}>
+                <button
+                  onClick={() => setPastExpanded(prev => !prev)}
+                  style={{
+                    width: '100%',
+                    padding: '16px 20px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: "'Fredoka', sans-serif",
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: "'Space Mono', monospace" }}>
+                    {pastExpanded ? '▾' : '▸'}
+                  </span>
+                  Past Seasons
+                  <span style={{
+                    color: 'var(--text-muted)',
+                    fontFamily: "'Space Mono', monospace",
+                    fontWeight: 400,
+                    fontSize: '12px',
+                  }}>
+                    ({pastSeasons.length})
+                  </span>
+                </button>
 
-              {pastExpanded && (
-                <div style={{ borderTop: '1px solid var(--border)' }}>
-                  {pastSeasons.length === 0 ? (
-                    <p style={{ padding: '16px 24px', color: 'var(--text-muted)' }}>
-                      No past seasons yet.
-                    </p>
-                  ) : (
-                    pastSeasons.map(s => (
-                      <div
-                        key={s.id}
-                        style={{
-                          padding: '14px 24px',
-                          borderTop: '1px solid var(--border)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                          fontSize: '14px',
-                        }}
-                      >
-                        <span style={{ fontWeight: 600 }}>Season {s.number}</span>
-                        <span style={{ color: 'var(--gold)' }}>{formatMoney(s.total_money_earned)}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>
-                          {formatDate(s.started_at)}
-                          {s.ended_at ? ` – ${formatDate(s.ended_at)}` : ''}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+                {pastExpanded && (
+                  <div style={{ borderTop: '1px solid var(--border)' }}>
+                    {pastSeasons.length === 0 ? (
+                      <p style={{
+                        padding: '16px 20px',
+                        color: 'var(--text-muted)',
+                        fontFamily: "'Space Mono', monospace",
+                        fontSize: '13px',
+                      }}>
+                        No past seasons yet.
+                      </p>
+                    ) : (
+                      pastSeasons.map(s => (
+                        <div
+                          key={s.id}
+                          style={{
+                            padding: '14px 20px',
+                            borderTop: '1px solid var(--border)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '8px',
+                          }}
+                        >
+                          <span style={{
+                            fontFamily: "'Fredoka', sans-serif",
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            color: 'var(--text)',
+                          }}>
+                            Season {s.number}
+                          </span>
+                          <span style={{
+                            color: 'var(--gold)',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '13px',
+                            fontWeight: 700,
+                          }}>
+                            {formatMoney(s.total_money_earned)}
+                          </span>
+                          <span style={{
+                            color: 'var(--text-muted)',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '12px',
+                          }}>
+                            {formatDate(s.started_at)}
+                            {s.ended_at ? ` – ${formatDate(s.ended_at)}` : ''}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </section>
           </>
         )}

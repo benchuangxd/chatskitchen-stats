@@ -25,37 +25,41 @@ export default function SearchBar({ initialValue = '' }: SearchBarProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '6px' }}>
       <input
-        type="text"
         value={value}
         onChange={e => setValue(e.target.value)}
-        placeholder="Search player by Twitch username..."
+        placeholder="Search player..."
         style={{
+          background: 'var(--surface)',
+          border: '1.5px solid var(--border)',
+          borderRadius: 'var(--radius)',
           padding: '8px 12px',
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--border)',
-          background: 'var(--bg-card)',
           color: 'var(--text)',
-          fontSize: '14px',
-          width: '280px',
+          fontFamily: "'Space Mono', monospace",
+          fontSize: '13px',
+          width: '180px',
+          outline: 'none',
+          transition: 'border-color 0.15s',
         }}
+        onFocus={e => (e.target.style.borderColor = 'var(--orange)')}
+        onBlur={e => (e.target.style.borderColor = 'var(--border)')}
       />
-      <button
-        type="submit"
-        style={{
-          padding: '8px 16px',
-          borderRadius: 'var(--radius)',
-          border: 'none',
-          background: 'var(--gold-dim)',
-          color: '#1a1a2e',
-          fontWeight: 700,
-          fontSize: '14px',
-          cursor: 'pointer',
-        }}
-      >
-        Search
-      </button>
+      <button type="submit" style={{
+        background: 'var(--orange)',
+        border: 'none',
+        borderRadius: 'var(--radius)',
+        padding: '8px 14px',
+        color: '#fff',
+        fontFamily: "'Fredoka', sans-serif",
+        fontSize: '16px',
+        fontWeight: 700,
+        cursor: 'pointer',
+        transition: 'filter 0.15s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.15)')}
+      onMouseLeave={e => (e.currentTarget.style.filter = '')}
+      >→</button>
     </form>
   )
 }

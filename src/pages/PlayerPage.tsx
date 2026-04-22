@@ -25,27 +25,41 @@ interface StatCardProps {
   icon: string
   label: string
   value: string | number
+  valueColor?: string
 }
 
-function StatCard({ icon, label, value }: StatCardProps) {
+function StatCard({ icon, label, value, valueColor }: StatCardProps) {
   return (
-    <div
-      style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        padding: '20px 24px',
-        minWidth: '140px',
-        flex: '1 1 140px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-      }}
-    >
-      <span style={{ fontSize: '22px' }}>{icon}</span>
-      <span style={{ fontSize: '24px', fontWeight: 700, color: 'var(--gold)' }}>{value}</span>
-      <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+    <div style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '20px',
+      flex: '1 1 140px',
+      minWidth: '130px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+    }}>
+      <span style={{ fontSize: '20px', marginBottom: '4px' }}>{icon}</span>
+      <span style={{
+        fontFamily: "'Space Mono', monospace",
+        fontSize: '10px',
+        fontWeight: 700,
+        color: 'var(--text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+      }}>
         {label}
+      </span>
+      <span style={{
+        fontFamily: "'Fredoka', sans-serif",
+        fontSize: '28px',
+        fontWeight: 700,
+        color: valueColor ?? 'var(--text)',
+        lineHeight: 1.1,
+      }}>
+        {value}
       </span>
     </div>
   )
@@ -124,22 +138,11 @@ export default function PlayerPage() {
   const activeStats = view === 'season' ? thisSeasonStats : allTimeStats
   const playerNotFound = !loading && !error && allTimeStats === null
 
-  const toggleButtonStyle = (active: boolean): React.CSSProperties => ({
-    padding: '8px 16px',
-    borderRadius: 'var(--radius)',
-    border: '1px solid var(--border)',
-    background: active ? 'var(--gold-dim)' : 'var(--bg-card)',
-    color: active ? '#1a1a2e' : 'var(--text)',
-    fontWeight: active ? 700 : 400,
-    fontSize: '14px',
-    cursor: 'pointer',
-  })
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Header searchInitialValue={username} />
 
-      <main style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 16px' }}>
+      <main style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
         <Link
           to="/"
           style={{
@@ -147,15 +150,24 @@ export default function PlayerPage() {
             alignItems: 'center',
             gap: '6px',
             color: 'var(--text-muted)',
-            fontSize: '14px',
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '13px',
             marginBottom: '24px',
+            textDecoration: 'none',
           }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
         >
-          ← Back to Leaderboard
+          ← Leaderboard
         </Link>
 
         {loading && (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '64px' }}>
+          <p style={{
+            color: 'var(--text-muted)',
+            textAlign: 'center',
+            marginTop: '64px',
+            fontFamily: "'Space Mono', monospace",
+          }}>
             Loading...
           </p>
         )}
@@ -167,46 +179,86 @@ export default function PlayerPage() {
         )}
 
         {playerNotFound && (
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '48px 24px',
-              textAlign: 'center',
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '64px 24px',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔍</div>
+            <p style={{
+              fontFamily: "'Fredoka', sans-serif",
+              fontSize: '20px',
+              fontWeight: 600,
+              color: 'var(--text)',
+              marginBottom: '8px',
+            }}>
+              Player not found
+            </p>
+            <p style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '13px',
               color: 'var(--text-muted)',
-            }}
-          >
-            <p style={{ fontSize: '18px', marginBottom: '8px' }}>Player not found</p>
-            <p style={{ fontSize: '14px' }}>
-              No contributions found for <strong style={{ color: 'var(--text)' }}>{username}</strong>.
+            }}>
+              No contributions found for <strong style={{ color: 'var(--text-dim)' }}>{username}</strong>.
             </p>
           </div>
         )}
 
         {!loading && !error && !playerNotFound && (
-          <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '28px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-              <h1 style={{ fontSize: '22px', color: 'var(--gold)' }}>
-                {username}
+          <>
+            {/* Player header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
+              marginBottom: '24px',
+            }}>
+              <h1 style={{
+                fontFamily: "'Fredoka', sans-serif",
+                fontSize: '32px',
+                fontWeight: 700,
+                color: 'var(--text)',
+                letterSpacing: '-0.5px',
+              }}>
+                👤 {username}
               </h1>
-              <div style={{ display: 'flex', gap: '8px' }}>
+
+              {/* Season toggle */}
+              <div style={{ display: 'flex', gap: '0', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)' }}>
                 <button
-                  style={toggleButtonStyle(view === 'season')}
                   onClick={() => setView('season')}
+                  style={{
+                    padding: '8px 16px',
+                    border: 'none',
+                    background: view === 'season' ? 'var(--orange)' : 'var(--surface)',
+                    color: view === 'season' ? '#fff' : 'var(--text-muted)',
+                    fontFamily: "'Space Mono', monospace",
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
                 >
                   This Season
                 </button>
                 <button
-                  style={toggleButtonStyle(view === 'alltime')}
                   onClick={() => setView('alltime')}
+                  style={{
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderLeft: '1px solid var(--border)',
+                    background: view === 'alltime' ? 'var(--orange)' : 'var(--surface)',
+                    color: view === 'alltime' ? '#fff' : 'var(--text-muted)',
+                    fontFamily: "'Space Mono', monospace",
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
                 >
                   All Time
                 </button>
@@ -214,36 +266,68 @@ export default function PlayerPage() {
             </div>
 
             {activeStats === null ? (
-              <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '32px 24px',
+                color: 'var(--text-muted)',
+                fontFamily: "'Space Mono', monospace",
+                fontSize: '13px',
+              }}>
                 {view === 'season'
                   ? activeSeason
                     ? `No data for Season ${activeSeason.number} yet.`
                     : 'No active season.'
                   : 'No data found.'}
-              </p>
+              </div>
             ) : (
               <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+                {/* Stats grid */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginBottom: '24px',
+                }}>
                   <StatCard icon="🍳" label="Cooked" value={activeStats.cooked} />
-                  <StatCard icon="🍽️" label="Served" value={activeStats.served} />
-                  <StatCard icon="💰" label="Earned" value={formatMoney(activeStats.money_earned)} />
-                  <StatCard icon="🚒" label="Extinguished" value={activeStats.extinguished} />
-                  <StatCard icon="🔥" label="Fires Caused" value={activeStats.fires_caused} />
+                  <StatCard icon="🍽️" label="Served" value={activeStats.served} valueColor="var(--success)" />
+                  <StatCard icon="💰" label="Earned" value={formatMoney(activeStats.money_earned)} valueColor="var(--gold)" />
+                  <StatCard icon="🚒" label="Extinguished" value={activeStats.extinguished} valueColor="#5b8dd9" />
+                  <StatCard icon="🔥" label="Fires Caused" value={activeStats.fires_caused} valueColor="var(--danger)" />
                 </div>
 
+                {/* Channels list */}
                 {activeStats.channels.length > 0 && (
-                  <div>
-                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Channels played in ({view === 'season' ? 'this season' : 'all time'})
+                  <div style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px 20px',
+                  }}>
+                    <p style={{
+                      fontFamily: "'Space Mono', monospace",
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      marginBottom: '8px',
+                    }}>
+                      Played in ({view === 'season' ? 'this season' : 'all time'})
                     </p>
-                    <p style={{ fontSize: '14px', color: 'var(--text)' }}>
+                    <p style={{
+                      fontFamily: "'Space Mono', monospace",
+                      fontSize: '13px',
+                      color: 'var(--text-secondary)',
+                    }}>
                       {activeStats.channels.join(', ')}
                     </p>
                   </div>
                 )}
               </>
             )}
-          </div>
+          </>
         )}
       </main>
     </div>
