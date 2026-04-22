@@ -1,0 +1,23 @@
+:root {
+  --gold: #f0c850;
+  --gold-dim: #c8a030;
+  --bg: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-card-hover: #1e2d50;
+  --text: #f0e8d0;
+  --text-muted: #a09880;
+  --success: #5cb85c;
+  --danger: #d94f4f;
+  --border: #2a3a5e;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+a { color: var(--gold); text-decoration: none; }
+a:hover { text-decoration: underline; }
