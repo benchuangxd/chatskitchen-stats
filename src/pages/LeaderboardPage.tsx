@@ -48,16 +48,18 @@ export default function LeaderboardPage() {
 
         if (season) {
           // 2. Get sessions for active season
-          const { data: sessions, error: sessionsErr } = await supabase
+          // TODO: Replace with server-side GROUP BY aggregation (RPC/view) when session count grows
+          const { data: sessionRows, error: sessionsErr } = await supabase
             .from('sessions')
             .select('channel_name, money_earned, served')
             .eq('season_id', season.id)
+            .limit(5000)
 
           if (sessionsErr) throw sessionsErr
 
           // Aggregate in JS
           const map = new Map<string, LeaderboardRow>()
-          for (const row of sessions ?? []) {
+          for (const row of sessionRows ?? []) {
             const existing = map.get(row.channel_name)
             if (existing) {
               existing.total_money += row.money_earned ?? 0

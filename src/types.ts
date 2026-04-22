@@ -15,12 +15,3 @@ export interface LeaderboardRow {
   total_served: number
 }
 
-export interface PlayerSeasonStats {
-  twitch_username: string
-  cooked: number
-  served: number
-  money_earned: number
-  extinguished: number
-  fires_caused: number
-  channels: string[]
-}

@@ -71,54 +71,32 @@ export default function PlayerPage() {
         setError(null)
 
         // Get active season
-        const { data: season } = await supabase
+        const { data: season, error: seasonErr } = await supabase
           .from('seasons')
           .select('*')
           .eq('status', 'active')
-          .single()
+          .maybeSingle()
+
+        if (seasonErr) throw seasonErr
 
         setActiveSeason(season ?? null)
 
-        // This season stats
-        if (season) {
-          const { data: seasonRows, error: seasonErr } = await supabase
-            .from('player_contributions')
-            .select('cooked, served, money_earned, extinguished, fires_caused, channel_name')
-            .eq('twitch_username', normalizedUsername)
-            .eq('season_id', season.id)
-
-          if (seasonErr) throw seasonErr
-
-          if (seasonRows && seasonRows.length > 0) {
-            const agg = emptyStats()
-            const channelSet = new Set<string>()
-            for (const r of seasonRows) {
-              agg.cooked += r.cooked ?? 0
-              agg.served += r.served ?? 0
-              agg.money_earned += r.money_earned ?? 0
-              agg.extinguished += r.extinguished ?? 0
-              agg.fires_caused += r.fires_caused ?? 0
-              if (r.channel_name) channelSet.add(r.channel_name)
-            }
-            agg.channels = Array.from(channelSet)
-            setThisSeasonStats(agg)
-          } else {
-            setThisSeasonStats(null)
-          }
-        }
-
-        // All time stats
+        // Fetch all player contributions in one query; partition in JS
         const { data: allRows, error: allErr } = await supabase
           .from('player_contributions')
-          .select('cooked, served, money_earned, extinguished, fires_caused, channel_name')
+          .select('cooked, served, money_earned, extinguished, fires_caused, channel_name, season_id')
           .eq('twitch_username', normalizedUsername)
 
         if (allErr) throw allErr
 
-        if (allRows && allRows.length > 0) {
+        const thisSeasonRows = allRows?.filter(r => r.season_id === season?.id) ?? []
+        const allTimeRows = allRows ?? []
+
+        function aggregate(rows: typeof allTimeRows): AggregatedStats | null {
+          if (rows.length === 0) return null
           const agg = emptyStats()
           const channelSet = new Set<string>()
-          for (const r of allRows) {
+          for (const r of rows) {
             agg.cooked += r.cooked ?? 0
             agg.served += r.served ?? 0
             agg.money_earned += r.money_earned ?? 0
@@ -127,10 +105,11 @@ export default function PlayerPage() {
             if (r.channel_name) channelSet.add(r.channel_name)
           }
           agg.channels = Array.from(channelSet)
-          setAllTimeStats(agg)
-        } else {
-          setAllTimeStats(null)
+          return agg
         }
+
+        setThisSeasonStats(season ? aggregate(thisSeasonRows) : null)
+        setAllTimeStats(aggregate(allTimeRows))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load player data')
       } finally {
