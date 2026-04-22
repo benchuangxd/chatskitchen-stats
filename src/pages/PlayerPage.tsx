@@ -288,7 +288,7 @@ export default function PlayerPage() {
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: '12px',
-                  marginBottom: '24px',
+                  marginBottom: '10px',
                 }}>
                   <StatCard icon="🍳" label="Cooked" value={activeStats.cooked} />
                   <StatCard icon="🍽️" label="Served" value={activeStats.served} valueColor="var(--success)" />
@@ -296,6 +296,17 @@ export default function PlayerPage() {
                   <StatCard icon="🚒" label="Extinguished" value={activeStats.extinguished} valueColor="#5b8dd9" />
                   <StatCard icon="🔥" label="Fires Caused" value={activeStats.fires_caused} valueColor="var(--danger)" />
                 </div>
+
+                {/* Earnings tip */}
+                <p style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  marginBottom: '24px',
+                  paddingLeft: '2px',
+                }}>
+                  💡 Earnings only count dishes personally served with <code style={{ background: 'var(--surface)', padding: '1px 5px', borderRadius: '3px', fontSize: '11px' }}>!serve</code>
+                </p>
 
                 {/* Channels list */}
                 {activeStats.channels.length > 0 && (
