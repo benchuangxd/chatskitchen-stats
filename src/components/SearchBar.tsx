@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -10,9 +10,11 @@ export default function SearchBar({ initialValue = '' }: SearchBarProps) {
   const [value, setValue] = useState(initialValue)
   const navigate = useNavigate()
 
-  useEffect(() => {
+  const prevInitialRef = useRef(initialValue)
+  if (prevInitialRef.current !== initialValue) {
+    prevInitialRef.current = initialValue
     setValue(initialValue ?? '')
-  }, [initialValue])
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()

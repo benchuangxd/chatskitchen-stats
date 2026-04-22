@@ -86,6 +86,7 @@ export default function PlayerPage() {
           .from('player_contributions')
           .select('cooked, served, money_earned, extinguished, fires_caused, channel_name, season_id')
           .eq('twitch_username', normalizedUsername)
+          .limit(10000)
 
         if (allErr) throw allErr
 
